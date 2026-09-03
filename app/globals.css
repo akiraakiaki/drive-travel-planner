@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background-color: #f7f5ef;
+  color: #1f2430;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+::selection {
+  background-color: #e8a33d;
+  color: #1f2430;
+}
