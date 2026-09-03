@@ -15,7 +15,10 @@ export async function GET(
   const planView = trip.plan ? await buildPlanView(trip.plan) : null;
   const buffer = await buildDocxBuffer(trip, planView);
 
-  return new NextResponse(buffer, {
+  // NextResponse(Response)のBodyInit型は Node の Buffer<ArrayBufferLike> と構造的に
+  // 一致しないことがあり(特にVercel本番ビルドの@types/nodeバージョンで顕在化)、
+  // TypeScriptの型エラーになる。中身は変えず、型としてBodyInit互換なUint8Arrayに変換する。
+  return new NextResponse(new Uint8Array(buffer), {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

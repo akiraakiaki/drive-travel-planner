@@ -1042,6 +1042,12 @@ function DayTimeline({
                 );
               }
 
+              // ここまでで travel / origin / destination のいずれでもないため、
+              // 残りは必ず "stop" のはずだが、TypeScriptに明示的に絞り込ませるためガードを入れる。
+              if (row.kind !== "stop") {
+                return null;
+              }
+
               const stop = row.stop;
               const isExpanded = expandedParking === stop.trip_place_id;
 

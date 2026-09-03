@@ -184,9 +184,12 @@ export async function generatePlan(input: GeneratePlanInput): Promise<TripPlan> 
       // 通行料金は「候補として検討した全ルート」ではなく「実際に採用された区間」だけ取得する
       // (課金レートが高いリクエストのため、探索中の候補全てには使わない)。
       // 有料道路を回避する設定(安さ優先)の場合は0円として扱い、APIは呼ばない。
+      // best.place.location は、候補探索の時点で location が無い場所は既に除外されているため
+      // 実質的には必ず値が入っているはずだが、型上は LatLng | null のままなので、
+      // ここでも明示的にnullチェックしてから使う(取得できない場合は「不明」のまま扱う)。
       let tollCash: number | null = null;
       let tollEtc: number | null = null;
-      if (currentLocation) {
+      if (currentLocation && best.place.location) {
         if (routeOptions.avoidTolls) {
           tollCash = 0;
           tollEtc = 0;

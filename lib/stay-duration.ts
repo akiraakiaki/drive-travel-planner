@@ -82,6 +82,9 @@ function roundTo15(minutes: number): number {
 const GENERIC_BASE_MINUTES = 60;
 
 export function estimateStayMinutes(primaryType: string | null, pace: PaceMode): number {
-  const base = (primaryType && CATEGORY_BASE_MINUTES[primaryType]) ?? GENERIC_BASE_MINUTES;
+  // primaryTypeが空文字列だった場合に `&&` の結果が文字列型のまま残ってしまう(=数値以外になる)のを避けるため、
+  // 先に「テーブル参照 or undefined」に一本化してから `??` でフォールバックする。
+  const lookedUp: number | undefined = primaryType ? CATEGORY_BASE_MINUTES[primaryType] : undefined;
+  const base: number = lookedUp ?? GENERIC_BASE_MINUTES;
   return roundTo15(base * PACE_MULTIPLIER[pace]);
 }
