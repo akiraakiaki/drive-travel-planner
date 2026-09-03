@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createTrip, listTrips } from "@/lib/store";
 
 export async function GET() {
-  return NextResponse.json({ trips: listTrips() });
+  return NextResponse.json({ trips: await listTrips() });
 }
 
 // 4.1 旅行作成: 必須項目チェック(開始日 <= 終了日 等)
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const trip = createTrip({
+  const trip = await createTrip({
     name,
     destination,
     start_date,

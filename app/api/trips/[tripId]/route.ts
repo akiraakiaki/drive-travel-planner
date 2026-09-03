@@ -10,12 +10,12 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
-  const trip = getTrip(params.tripId);
+  const trip = await getTrip(params.tripId);
   if (!trip) {
     return NextResponse.json({ error: "旅行が見つかりません。" }, { status: 404 });
   }
 
-  const places = listTripPlaces(trip.id);
+  const places = await listTripPlaces(trip.id);
   const tripDates = enumerateDates(trip.start_date, trip.end_date);
 
   // 6章: Google由来の情報は保存せず、都度取得する。

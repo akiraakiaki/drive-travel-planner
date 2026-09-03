@@ -1,7 +1,7 @@
 // 永続化された TripPlan(place_idと自社計算値のみ)に、表示直前にGoogleから都度取得した
 // 名称・座標を合成し、TripPlanView を組み立てる。
 //
-// 【重要】この結果は絶対にdata/db.jsonへ保存しないこと。
+// 【重要】この結果は絶対にDB(Postgres)へ保存しないこと。
 // Google Maps Platformのポリシー上、place_id以外(名称・住所・座標等)は
 // 恒久的にキャッシュ・保存してはならないため、表示のたびに毎回この関数を呼び直す。
 import { getPlaceDetails } from "./places";

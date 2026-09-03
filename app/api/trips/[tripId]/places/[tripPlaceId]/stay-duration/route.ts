@@ -14,7 +14,7 @@ export async function PATCH(
     return NextResponse.json({ error: "minutes は0以上の数値で指定してください。" }, { status: 400 });
   }
 
-  const ok = updateTripPlaceStayDuration(params.tripId, params.tripPlaceId, minutes);
+  const ok = await updateTripPlaceStayDuration(params.tripId, params.tripPlaceId, minutes);
   if (!ok) {
     return NextResponse.json({ error: "対象の場所が見つかりません。" }, { status: 404 });
   }

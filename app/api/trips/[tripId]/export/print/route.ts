@@ -10,7 +10,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
-  const trip = getTrip(params.tripId);
+  const trip = await getTrip(params.tripId);
   if (!trip) {
     return NextResponse.json({ error: "旅行が見つかりません。" }, { status: 404 });
   }

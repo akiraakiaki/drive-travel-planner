@@ -40,12 +40,12 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
-  const trip = getTrip(params.tripId);
+  const trip = await getTrip(params.tripId);
   if (!trip) {
     return NextResponse.json({ error: "旅行が見つかりません。" }, { status: 404 });
   }
 
-  const tripPlaces = listTripPlaces(trip.id);
+  const tripPlaces = await listTripPlaces(trip.id);
   if (tripPlaces.length === 0) {
     return NextResponse.json(
       { error: "行きたい場所が1件も登録されていません。先に場所を追加してください。" },
@@ -104,7 +104,7 @@ export async function POST(
     places: plannerPlaces,
   });
 
-  const updatedTrip = saveTripPlan(trip.id, plan);
+  const updatedTrip = await saveTripPlan(trip.id, plan);
   if (!updatedTrip) {
     return NextResponse.json({ error: "プランの保存に失敗しました。" }, { status: 500 });
   }

@@ -1,0 +1,464 @@
+{
+  "trips": [
+    {
+      "id": "trip_hu5m4vlzmtk51ohl",
+      "name": "test",
+      "destination": "testiland",
+      "start_date": "2030-10-10",
+      "end_date": "2030-10-12",
+      "daily_start_time": "09:00",
+      "daily_end_time": "22:00",
+      "transport_mode": "car",
+      "pace": "packed",
+      "base_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY",
+      "day_configs": [
+        {
+          "day": 1,
+          "date": "2030-10-10",
+          "activity_start_time": "09:00",
+          "activity_end_time": "15:00",
+          "origin_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY",
+          "destination_place_id": "ChIJC6fjlY3mAGARSshZ6CLIrhs"
+        },
+        {
+          "day": 2,
+          "date": "2030-10-11",
+          "activity_start_time": "09:00",
+          "activity_end_time": "22:00",
+          "origin_place_id": "ChIJC6fjlY3mAGARSshZ6CLIrhs",
+          "destination_place_id": "ChIJndrfMAaPAGAR7_THBJSK10M"
+        },
+        {
+          "day": 3,
+          "date": "2030-10-12",
+          "activity_start_time": "09:00",
+          "activity_end_time": "22:00",
+          "origin_place_id": "ChIJndrfMAaPAGAR7_THBJSK10M",
+          "destination_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY"
+        }
+      ],
+      "plan": {
+        "generated_at": "2026-09-03T13:09:28.789Z",
+        "days": [
+          {
+            "day": 1,
+            "date": "2030-10-10",
+            "start_time": "09:00",
+            "start_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY",
+            "stops": [
+              {
+                "trip_place_id": "place_ylh2objbmtk53n9r",
+                "place_id": "ChIJC5srCtQHAWARLy9qkFmHaxA",
+                "arrival_time": "09:13",
+                "departure_time": "09:58",
+                "stay_minutes": 45,
+                "travel_minutes_from_prev": 13,
+                "toll_cash_yen": 0,
+                "toll_etc_yen": 0,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              },
+              {
+                "trip_place_id": "place_u0gkoswzmtk531xp",
+                "place_id": "ChIJvUbrwCCoAWARX2QiHCsn5A4",
+                "arrival_time": "10:12",
+                "departure_time": "10:57",
+                "stay_minutes": 45,
+                "travel_minutes_from_prev": 14,
+                "toll_cash_yen": 0,
+                "toll_etc_yen": 0,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              },
+              {
+                "trip_place_id": "place_iseid943mtk53cyi",
+                "place_id": "ChIJ4W9CCwUJAWARyauI6BzKiiU",
+                "arrival_time": "11:21",
+                "departure_time": "12:06",
+                "stay_minutes": 45,
+                "travel_minutes_from_prev": 24,
+                "toll_cash_yen": 0,
+                "toll_etc_yen": 0,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              }
+            ],
+            "end_place_id": "ChIJC6fjlY3mAGARSshZ6CLIrhs",
+            "travel_minutes_to_end": 114,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "14:00"
+          },
+          {
+            "day": 2,
+            "date": "2030-10-11",
+            "start_time": "09:00",
+            "start_place_id": "ChIJC6fjlY3mAGARSshZ6CLIrhs",
+            "stops": [
+              {
+                "trip_place_id": "place_h5p6usewmtk52g8e",
+                "place_id": "ChIJB_vchdMIAWARujTEUIZlr2I",
+                "arrival_time": "10:45",
+                "departure_time": "14:05",
+                "stay_minutes": 200,
+                "travel_minutes_from_prev": 105,
+                "toll_cash_yen": 0,
+                "toll_etc_yen": 0,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              }
+            ],
+            "end_place_id": "ChIJndrfMAaPAGAR7_THBJSK10M",
+            "travel_minutes_to_end": 161,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "16:46"
+          },
+          {
+            "day": 3,
+            "date": "2030-10-12",
+            "start_time": "09:00",
+            "start_place_id": "ChIJndrfMAaPAGAR7_THBJSK10M",
+            "stops": [],
+            "end_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY",
+            "travel_minutes_to_end": 155,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "11:35"
+          }
+        ],
+        "unassigned": []
+      },
+      "created_at": "2026-09-02T13:34:57.849Z",
+      "updated_at": "2026-09-03T13:09:28.793Z",
+      "origin_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY",
+      "destination_place_id": "ChIJ7wKLka4IAWARCByidG5EGrY",
+      "route_preference": "cheapest"
+    },
+    {
+      "id": "trip_ip1zpln0mtljl9jq",
+      "name": "test2",
+      "destination": "東京",
+      "start_date": "2026-09-05",
+      "end_date": "2026-09-12",
+      "daily_start_time": "09:00",
+      "daily_end_time": "18:00",
+      "transport_mode": "car",
+      "pace": "packed",
+      "route_preference": "fastest",
+      "day_configs": [
+        {
+          "day": 1,
+          "date": "2026-09-05",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+          "destination_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA"
+        },
+        {
+          "day": 2,
+          "date": "2026-09-06",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+          "destination_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA"
+        },
+        {
+          "day": 3,
+          "date": "2026-09-07",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+          "destination_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA"
+        },
+        {
+          "day": 4,
+          "date": "2026-09-08",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+          "destination_place_id": "ChIJhVIszEPBGGARE9TlMlpmDyg"
+        },
+        {
+          "day": 5,
+          "date": "2026-09-09",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJhVIszEPBGGARE9TlMlpmDyg",
+          "destination_place_id": "ChIJZbo1ylbaGGARzsxu9jE-GsI"
+        },
+        {
+          "day": 6,
+          "date": "2026-09-10",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJZbo1ylbaGGARzsxu9jE-GsI",
+          "destination_place_id": "ChIJ8dLP9g1cGGAR9TVSa_OmvLs"
+        },
+        {
+          "day": 7,
+          "date": "2026-09-11",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJ8dLP9g1cGGAR9TVSa_OmvLs",
+          "destination_place_id": "ChIJhXkd-R1dGGARYHL63aSHPJY"
+        },
+        {
+          "day": 8,
+          "date": "2026-09-12",
+          "activity_start_time": "09:00",
+          "activity_end_time": "18:00",
+          "origin_place_id": "ChIJhXkd-R1dGGARYHL63aSHPJY",
+          "destination_place_id": "ChIJS_23WSCNGGAR0u8y4o_GYew"
+        }
+      ],
+      "plan": {
+        "generated_at": "2026-09-03T13:12:32.986Z",
+        "days": [
+          {
+            "day": 1,
+            "date": "2026-09-05",
+            "start_time": "09:00",
+            "start_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "stops": [
+              {
+                "trip_place_id": "place_511xs3ormtljltni",
+                "place_id": "ChIJM9xJEHeLGGARAshMWUgC_ls",
+                "arrival_time": "09:28",
+                "departure_time": "10:58",
+                "stay_minutes": 90,
+                "travel_minutes_from_prev": 28,
+                "toll_cash_yen": 0,
+                "toll_etc_yen": 0,
+                "wait_minutes": 0,
+                "hours_uncertain": true,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              },
+              {
+                "trip_place_id": "place_42bcbui4mtljlye1",
+                "place_id": "ChIJBTm2INiOGGARBmvT5Ql8T7k",
+                "arrival_time": "11:35",
+                "departure_time": "13:05",
+                "stay_minutes": 90,
+                "travel_minutes_from_prev": 37,
+                "toll_cash_yen": null,
+                "toll_etc_yen": 470,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              },
+              {
+                "trip_place_id": "place_gzpzath2mtljlofo",
+                "place_id": "ChIJ35ov0dCOGGARKvdDH7NPHX0",
+                "arrival_time": "13:15",
+                "departure_time": "14:45",
+                "stay_minutes": 90,
+                "travel_minutes_from_prev": 10,
+                "toll_cash_yen": 0,
+                "toll_etc_yen": 0,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              },
+              {
+                "trip_place_id": "place_zqsjuyi6mtljlhn8",
+                "place_id": "ChIJCewJkL2LGGAR3Qmk0vCTGkg",
+                "arrival_time": "15:19",
+                "departure_time": "16:49",
+                "stay_minutes": 90,
+                "travel_minutes_from_prev": 34,
+                "toll_cash_yen": null,
+                "toll_etc_yen": 540,
+                "wait_minutes": 0,
+                "hours_uncertain": false,
+                "selected_parking_place_id": null,
+                "parking_walk_minutes": null
+              }
+            ],
+            "end_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "travel_minutes_to_end": 22,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "17:11"
+          },
+          {
+            "day": 2,
+            "date": "2026-09-06",
+            "start_time": "09:00",
+            "start_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "stops": [],
+            "end_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "travel_minutes_to_end": 5,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "09:05"
+          },
+          {
+            "day": 3,
+            "date": "2026-09-07",
+            "start_time": "09:00",
+            "start_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "stops": [],
+            "end_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "travel_minutes_to_end": 5,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "09:05"
+          },
+          {
+            "day": 4,
+            "date": "2026-09-08",
+            "start_time": "09:00",
+            "start_place_id": "ChIJC3Cf2PuLGGAROO00ukl8JwA",
+            "stops": [],
+            "end_place_id": "ChIJhVIszEPBGGARE9TlMlpmDyg",
+            "travel_minutes_to_end": 57,
+            "toll_cash_yen_to_end": null,
+            "toll_etc_yen_to_end": 1210,
+            "arrival_at_end_time": "09:57"
+          },
+          {
+            "day": 5,
+            "date": "2026-09-09",
+            "start_time": "09:00",
+            "start_place_id": "ChIJhVIszEPBGGARE9TlMlpmDyg",
+            "stops": [],
+            "end_place_id": "ChIJZbo1ylbaGGARzsxu9jE-GsI",
+            "travel_minutes_to_end": 52,
+            "toll_cash_yen_to_end": 0,
+            "toll_etc_yen_to_end": 0,
+            "arrival_at_end_time": "09:52"
+          },
+          {
+            "day": 6,
+            "date": "2026-09-10",
+            "start_time": "09:00",
+            "start_place_id": "ChIJZbo1ylbaGGARzsxu9jE-GsI",
+            "stops": [],
+            "end_place_id": "ChIJ8dLP9g1cGGAR9TVSa_OmvLs",
+            "travel_minutes_to_end": 112,
+            "toll_cash_yen_to_end": 1240,
+            "toll_etc_yen_to_end": 1240,
+            "arrival_at_end_time": "10:52"
+          },
+          {
+            "day": 7,
+            "date": "2026-09-11",
+            "start_time": "09:00",
+            "start_place_id": "ChIJ8dLP9g1cGGAR9TVSa_OmvLs",
+            "stops": [],
+            "end_place_id": "ChIJhXkd-R1dGGARYHL63aSHPJY",
+            "travel_minutes_to_end": 19,
+            "toll_cash_yen_to_end": 1950,
+            "toll_etc_yen_to_end": 350,
+            "arrival_at_end_time": "09:19"
+          },
+          {
+            "day": 8,
+            "date": "2026-09-12",
+            "start_time": "09:00",
+            "start_place_id": "ChIJhXkd-R1dGGARYHL63aSHPJY",
+            "stops": [],
+            "end_place_id": "ChIJS_23WSCNGGAR0u8y4o_GYew",
+            "travel_minutes_to_end": 64,
+            "toll_cash_yen_to_end": null,
+            "toll_etc_yen_to_end": 1570,
+            "arrival_at_end_time": "10:04"
+          }
+        ],
+        "unassigned": []
+      },
+      "created_at": "2026-09-03T13:09:52.406Z",
+      "updated_at": "2026-09-03T13:21:52.712Z"
+    }
+  ],
+  "tripPlaces": {
+    "trip_hu5m4vlzmtk51ohl": [
+      {
+        "id": "place_h5p6usewmtk52g8e",
+        "trip_id": "trip_hu5m4vlzmtk51ohl",
+        "google_place_id": "ChIJB_vchdMIAWARujTEUIZlr2I",
+        "user_defined_stay_duration": 200,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-02T13:35:33.806Z"
+      },
+      {
+        "id": "place_u0gkoswzmtk531xp",
+        "trip_id": "trip_hu5m4vlzmtk51ohl",
+        "google_place_id": "ChIJvUbrwCCoAWARX2QiHCsn5A4",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-02T13:36:01.933Z"
+      },
+      {
+        "id": "place_iseid943mtk53cyi",
+        "trip_id": "trip_hu5m4vlzmtk51ohl",
+        "google_place_id": "ChIJ4W9CCwUJAWARyauI6BzKiiU",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-02T13:36:16.218Z"
+      },
+      {
+        "id": "place_ylh2objbmtk53n9r",
+        "trip_id": "trip_hu5m4vlzmtk51ohl",
+        "google_place_id": "ChIJC5srCtQHAWARLy9qkFmHaxA",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-02T13:36:29.583Z"
+      }
+    ],
+    "trip_ip1zpln0mtljl9jq": [
+      {
+        "id": "place_zqsjuyi6mtljlhn8",
+        "trip_id": "trip_ip1zpln0mtljl9jq",
+        "google_place_id": "ChIJCewJkL2LGGAR3Qmk0vCTGkg",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-03T13:10:02.900Z"
+      },
+      {
+        "id": "place_gzpzath2mtljlofo",
+        "trip_id": "trip_ip1zpln0mtljl9jq",
+        "google_place_id": "ChIJ35ov0dCOGGARKvdDH7NPHX0",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-03T13:10:11.700Z"
+      },
+      {
+        "id": "place_511xs3ormtljltni",
+        "trip_id": "trip_ip1zpln0mtljl9jq",
+        "google_place_id": "ChIJM9xJEHeLGGARAshMWUgC_ls",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-03T13:10:18.462Z"
+      },
+      {
+        "id": "place_42bcbui4mtljlye1",
+        "trip_id": "trip_ip1zpln0mtljl9jq",
+        "google_place_id": "ChIJBTm2INiOGGARBmvT5Ql8T7k",
+        "user_defined_stay_duration": null,
+        "day": null,
+        "order": null,
+        "created_at": "2026-09-03T13:10:24.601Z"
+      }
+    ]
+  }
+}

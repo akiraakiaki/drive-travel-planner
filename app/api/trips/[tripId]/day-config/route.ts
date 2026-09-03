@@ -14,7 +14,7 @@ export async function PATCH(
     return NextResponse.json({ error: "day は必須です。" }, { status: 400 });
   }
 
-  const trip = updateTripDayConfig(params.tripId, body.day, {
+  const trip = await updateTripDayConfig(params.tripId, body.day, {
     activity_start_time: body.activity_start_time,
     activity_end_time: body.activity_end_time,
     origin_place_id: body.origin_place_id,

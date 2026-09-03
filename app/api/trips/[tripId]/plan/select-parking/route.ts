@@ -20,7 +20,7 @@ export async function POST(
     return NextResponse.json({ error: "day と trip_place_id は必須です。" }, { status: 400 });
   }
 
-  const trip = getTrip(params.tripId);
+  const trip = await getTrip(params.tripId);
   if (!trip || !trip.plan) {
     return NextResponse.json({ error: "旅行またはプランが見つかりません。" }, { status: 404 });
   }
@@ -32,7 +32,7 @@ export async function POST(
   }
 
   if (body.parking_place_id === null) {
-    const updated = selectStopParking(
+    const updated = await selectStopParking(
       trip.id,
       body.day,
       body.trip_place_id,
@@ -54,7 +54,7 @@ export async function POST(
       ? Math.max(1, Math.ceil(distanceMeters / WALK_SPEED_METERS_PER_MINUTE))
       : 5; // 距離不明の場合は控えめに5分と仮定する
 
-  const updated = selectStopParking(
+  const updated = await selectStopParking(
     trip.id,
     body.day,
     body.trip_place_id,

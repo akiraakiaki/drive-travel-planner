@@ -3,7 +3,7 @@
 // この共通データから組み立てる(表現がバラつかないようにするため)。
 //
 // 【重要】ここで受け取るのは必ず TripPlanView(表示用に都度合成したもの)であること。
-// data/db.jsonに保存されている生の TripPlan は名称・座標を含まないため、エクスポート前に
+// DB(Postgres)に保存されている生の TripPlan は名称・座標を含まないため、エクスポート前に
 // 呼び出し側で buildPlanView() を通す必要がある(Googleポリシー対応、lib/plan-view.ts参照)。
 import { DayPlanView, Trip, TripPlanView } from "./types";
 

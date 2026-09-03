@@ -24,7 +24,7 @@ export async function PATCH(
     return NextResponse.json({ error: "経路の希望の値が不正です。" }, { status: 400 });
   }
 
-  const trip = updateTripSettings(params.tripId, {
+  const trip = await updateTripSettings(params.tripId, {
     pace: body.pace,
     route_preference: body.route_preference,
   });

@@ -1,6 +1,8 @@
-// data/db.json への読み書きを介した、旅行・場所データの操作関数群。
+// 旅行・場所データの操作関数群。永続化はPostgres(lib/db.ts)経由で行う。
+// DBアクセスが非同期になったため、全ての関数を async にしている
+// (以前のファイルI/O版から移行した際、呼び出し側には全てawaitを追加している)。
 import { DayPlan, PaceMode, RoutePreference, Trip, TripDayConfig, TripPlace, TripPlan } from "./types";
-import { readDb, writeDb } from "./db";
+import { readAllTrips, readTrip, readTripPlaces, writeTrip, writeTripPlaces } from "./db";
 import { enumerateDates } from "./date-utils";
 
 function nowIso() {
@@ -29,7 +31,7 @@ function buildDayConfigs(
 
 // 旅程設定機能を追加する前に作成された旧データ(day_configs等が存在しない)、
 // 公共交通機関モードが存在した頃の旧データ、単一の「拠点」/トリップ単位の出発地・到着地だった頃の
-// 旧データを、読み込み時に自動補完する。data/db.json を直接書き換えずに済むための互換レイヤー。
+// 旧データを、読み込み時に自動補完する。保存されている生データを直接書き換えずに済むための互換レイヤー。
 // ドライブ専用アプリのため transport_mode は常に "car"。
 function normalizeTrip(trip: Trip): Trip {
   const daily_start_time = trip.daily_start_time ?? "09:00";
@@ -76,16 +78,14 @@ function normalizeTrip(trip: Trip): Trip {
   };
 }
 
-export function createTrip(input: {
+export async function createTrip(input: {
   name: string;
   destination: string;
   start_date: string;
   end_date: string;
   daily_start_time?: string;
   daily_end_time?: string;
-}): Trip {
-  const db = readDb();
-
+}): Promise<Trip> {
   const daily_start_time = input.daily_start_time ?? "09:00";
   const daily_end_time = input.daily_end_time ?? "18:00";
 
@@ -106,41 +106,37 @@ export function createTrip(input: {
     updated_at: nowIso(),
   };
 
-  db.trips.push(trip);
-  db.tripPlaces[trip.id] = [];
-  writeDb(db);
+  await writeTrip(trip);
+  await writeTripPlaces(trip.id, []);
 
   return trip;
 }
 
-export function listTrips(): Trip[] {
-  const db = readDb();
-  return [...db.trips].map(normalizeTrip).sort((a, b) => (a.start_date < b.start_date ? -1 : 1));
+export async function listTrips(): Promise<Trip[]> {
+  const trips = await readAllTrips();
+  return trips.map(normalizeTrip).sort((a, b) => (a.start_date < b.start_date ? -1 : 1));
 }
 
-export function getTrip(tripId: string): Trip | undefined {
-  const db = readDb();
-  const trip = db.trips.find((t) => t.id === tripId);
+export async function getTrip(tripId: string): Promise<Trip | undefined> {
+  const trip = await readTrip(tripId);
   return trip ? normalizeTrip(trip) : undefined;
 }
 
-export function listTripPlaces(tripId: string): TripPlace[] {
-  const db = readDb();
-  return db.tripPlaces[tripId] ?? [];
+export async function listTripPlaces(tripId: string): Promise<TripPlace[]> {
+  return readTripPlaces(tripId);
 }
 
 // 5.2 場所の重複登録防止: 同一 place_id は複数回登録できない
-export function addTripPlace(
+export async function addTripPlace(
   tripId: string,
   googlePlaceId: string
-): { ok: true; place: TripPlace } | { ok: false; reason: "duplicate" | "trip_not_found" } {
-  const db = readDb();
-
-  if (!db.trips.some((t) => t.id === tripId)) {
+): Promise<{ ok: true; place: TripPlace } | { ok: false; reason: "duplicate" | "trip_not_found" }> {
+  const trip = await readTrip(tripId);
+  if (!trip) {
     return { ok: false, reason: "trip_not_found" };
   }
 
-  const existing = db.tripPlaces[tripId] ?? [];
+  const existing = await readTripPlaces(tripId);
   if (existing.some((p) => p.google_place_id === googlePlaceId)) {
     return { ok: false, reason: "duplicate" };
   }
@@ -155,55 +151,47 @@ export function addTripPlace(
     created_at: nowIso(),
   };
 
-  db.tripPlaces[tripId] = [...existing, place];
-  writeDb(db);
+  await writeTripPlaces(tripId, [...existing, place]);
 
   return { ok: true, place };
 }
 
-export function removeTripPlace(tripId: string, tripPlaceId: string): boolean {
-  const db = readDb();
-  const existing = db.tripPlaces[tripId];
-  if (!existing) return false;
-
+export async function removeTripPlace(tripId: string, tripPlaceId: string): Promise<boolean> {
+  const existing = await readTripPlaces(tripId);
   const next = existing.filter((p) => p.id !== tripPlaceId);
   const changed = next.length !== existing.length;
 
-  db.tripPlaces[tripId] = next;
-  writeDb(db);
+  if (changed) {
+    await writeTripPlaces(tripId, next);
+  }
 
   return changed;
 }
 
-export function updateTripPlaceStayDuration(
+export async function updateTripPlaceStayDuration(
   tripId: string,
   tripPlaceId: string,
   minutes: number
-): boolean {
-  const db = readDb();
-  const existing = db.tripPlaces[tripId];
-  if (!existing) return false;
-
+): Promise<boolean> {
+  const existing = await readTripPlaces(tripId);
   const idx = existing.findIndex((p) => p.id === tripPlaceId);
   if (idx === -1) return false;
 
   existing[idx] = { ...existing[idx], user_defined_stay_duration: minutes };
-  db.tripPlaces[tripId] = [...existing];
-  writeDb(db);
+  await writeTripPlaces(tripId, existing);
 
   return true;
 }
 
 // 旅程設定(活動量・経路の希望)を更新する
-export function updateTripSettings(
+export async function updateTripSettings(
   tripId: string,
   input: { pace?: PaceMode; route_preference?: RoutePreference }
-): Trip | null {
-  const db = readDb();
-  const idx = db.trips.findIndex((t) => t.id === tripId);
-  if (idx === -1) return null;
+): Promise<Trip | null> {
+  const raw = await readTrip(tripId);
+  if (!raw) return null;
 
-  const trip = normalizeTrip(db.trips[idx]);
+  const trip = normalizeTrip(raw);
   const updated: Trip = {
     ...trip,
     pace: input.pace ?? trip.pace,
@@ -211,15 +199,14 @@ export function updateTripSettings(
     updated_at: nowIso(),
   };
 
-  db.trips[idx] = updated;
-  writeDb(db);
+  await writeTrip(updated);
   return updated;
 }
 
 // 日ごとの活動時間・出発地/到着地(8章)を更新する。
 // ある日の到着地を変更すると、翌日の出発地が未設定または今回の変更前の到着地と同じだった場合、
 // 自動的に翌日の出発地として引き継ぐ(例: Day1到着地 = Day2出発地)。
-export function updateTripDayConfig(
+export async function updateTripDayConfig(
   tripId: string,
   day: number,
   input: {
@@ -228,12 +215,11 @@ export function updateTripDayConfig(
     origin_place_id?: string | null;
     destination_place_id?: string | null;
   }
-): Trip | null {
-  const db = readDb();
-  const idx = db.trips.findIndex((t) => t.id === tripId);
-  if (idx === -1) return null;
+): Promise<Trip | null> {
+  const raw = await readTrip(tripId);
+  if (!raw) return null;
 
-  const trip = normalizeTrip(db.trips[idx]);
+  const trip = normalizeTrip(raw);
   const dayIdx = trip.day_configs.findIndex((dc) => dc.day === day);
   if (dayIdx === -1) return null;
 
@@ -265,39 +251,35 @@ export function updateTripDayConfig(
   }
 
   const updated: Trip = { ...trip, day_configs: dayConfigs, updated_at: nowIso() };
-  db.trips[idx] = updated;
-  writeDb(db);
+  await writeTrip(updated);
   return updated;
 }
 
 // 生成した旅程プランを保存する
-export function saveTripPlan(tripId: string, plan: TripPlan): Trip | null {
-  const db = readDb();
-  const idx = db.trips.findIndex((t) => t.id === tripId);
-  if (idx === -1) return null;
+export async function saveTripPlan(tripId: string, plan: TripPlan): Promise<Trip | null> {
+  const raw = await readTrip(tripId);
+  if (!raw) return null;
 
-  const updated: Trip = { ...normalizeTrip(db.trips[idx]), plan, updated_at: nowIso() };
-  db.trips[idx] = updated;
-  writeDb(db);
+  const updated: Trip = { ...normalizeTrip(raw), plan, updated_at: nowIso() };
+  await writeTrip(updated);
   return updated;
 }
 
 // 特定の訪問地について駐車場を選択(またはクリア)し、その日のタイムラインを再計算して保存する。
 // Google由来の駐車場情報(名称・住所等)は保存せず、Place IDのみを保存する
 // (Googleポリシー上、place_idのみが無期限保存可能なため)。
-export function selectStopParking(
+export async function selectStopParking(
   tripId: string,
   day: number,
   tripPlaceId: string,
   parkingPlaceId: string | null,
   walkMinutes: number | null,
   recompute: (day: DayPlan) => DayPlan
-): Trip | null {
-  const db = readDb();
-  const idx = db.trips.findIndex((t) => t.id === tripId);
-  if (idx === -1) return null;
+): Promise<Trip | null> {
+  const raw = await readTrip(tripId);
+  if (!raw) return null;
 
-  const trip = normalizeTrip(db.trips[idx]);
+  const trip = normalizeTrip(raw);
   if (!trip.plan) return null;
 
   const dayIdx = trip.plan.days.findIndex((d) => d.day === day);
@@ -320,7 +302,6 @@ export function selectStopParking(
     plan: { ...trip.plan, days },
     updated_at: nowIso(),
   };
-  db.trips[idx] = updated;
-  writeDb(db);
+  await writeTrip(updated);
   return updated;
 }

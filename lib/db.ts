@@ -1,40 +1,84 @@
-// ローカルファイル(data/db.json)への簡易永続化。
-// MVPなので本格的なDB(SQLite/Postgres等)は使わず、JSONファイルへの読み書きで代替する。
-// 複数人が同時に書き込むような本番運用には向かないため、Phase 2以降でDBに差し替える想定。
-import fs from "node:fs";
-import path from "node:path";
+// Postgres(Vercel Postgres / Neon等)への永続化レイヤー。
+//
+// 【以前の実装について】
+// 以前はローカルファイル(data/db.json)への書き込みで代用していたが、
+// Vercelのサーバーレス関数は実行環境のファイルシステムが読み取り専用であるため、
+// 本番デプロイ後に旅行の作成・保存が全て失敗する不具合が起きていた
+// (/tmp のみ書き込み可能だが、リクエストごとに揮発するため永続化には使えない)。
+// そのため、マネージドPostgres(Vercel Postgres/Neon等)を使った永続化に置き換えている。
+//
+// 【スキーマ設計について】
+// 既存の型定義(Trip・TripPlace)が持つネストした構造(day_configs・plan等)をそのまま
+// 生かせるよう、テーブルを細かく正規化せず「1行=1トリップ分のJSONB」として保存している。
+// 将来的にユーザーごとのデータ分離(認証)や、より厳密な同時編集の整合性(トランザクション)が
+// 必要になった場合は、このレイヤーだけを差し替えれば良いように store.ts 側とは責務を分離している。
+import { sql } from "@vercel/postgres";
 import { Trip, TripPlace } from "./types";
 
-interface DbShape {
-  trips: Trip[];
-  tripPlaces: Record<string, TripPlace[]>; // trip_id -> places
+// テーブル作成は初回アクセス時に1度だけ行う(以降はメモ化して再実行しない)。
+// CREATE TABLE IF NOT EXISTS は冪等なので、複数インスタンスから同時に呼ばれても安全。
+let schemaReadyPromise: Promise<void> | null = null;
+
+function ensureSchema(): Promise<void> {
+  if (!schemaReadyPromise) {
+    schemaReadyPromise = (async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS trips (
+          id TEXT PRIMARY KEY,
+          data JSONB NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS trip_places (
+          trip_id TEXT PRIMARY KEY,
+          data JSONB NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+      `;
+    })().catch((err) => {
+      // 初期化に失敗した場合は次回呼び出し時に再試行できるようリセットする
+      schemaReadyPromise = null;
+      throw err;
+    });
+  }
+  return schemaReadyPromise;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_FILE = path.join(DATA_DIR, "db.json");
-
-function ensureFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(DB_FILE)) {
-    const initial: DbShape = { trips: [], tripPlaces: {} };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), "utf-8");
-  }
+export async function readAllTrips(): Promise<Trip[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ data: Trip }>`SELECT data FROM trips`;
+  return rows.map((r) => r.data);
 }
 
-export function readDb(): DbShape {
-  ensureFile();
-  const raw = fs.readFileSync(DB_FILE, "utf-8");
-  try {
-    return JSON.parse(raw) as DbShape;
-  } catch {
-    // 壊れていた場合は初期状態として扱う(データ消失より起動できることを優先)
-    return { trips: [], tripPlaces: {} };
-  }
+export async function readTrip(tripId: string): Promise<Trip | null> {
+  await ensureSchema();
+  const { rows } = await sql<{ data: Trip }>`SELECT data FROM trips WHERE id = ${tripId}`;
+  return rows[0]?.data ?? null;
 }
 
-export function writeDb(db: DbShape) {
-  ensureFile();
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf-8");
+export async function writeTrip(trip: Trip): Promise<void> {
+  await ensureSchema();
+  await sql`
+    INSERT INTO trips (id, data, updated_at)
+    VALUES (${trip.id}, ${JSON.stringify(trip)}::jsonb, now())
+    ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+  `;
+}
+
+export async function readTripPlaces(tripId: string): Promise<TripPlace[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ data: TripPlace[] }>`
+    SELECT data FROM trip_places WHERE trip_id = ${tripId}
+  `;
+  return rows[0]?.data ?? [];
+}
+
+export async function writeTripPlaces(tripId: string, places: TripPlace[]): Promise<void> {
+  await ensureSchema();
+  await sql`
+    INSERT INTO trip_places (trip_id, data, updated_at)
+    VALUES (${tripId}, ${JSON.stringify(places)}::jsonb, now())
+    ON CONFLICT (trip_id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+  `;
 }

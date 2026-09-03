@@ -16,7 +16,7 @@ export async function POST(
     );
   }
 
-  const result = addTripPlace(params.tripId, googlePlaceId);
+  const result = await addTripPlace(params.tripId, googlePlaceId);
 
   if (!result.ok) {
     if (result.reason === "trip_not_found") {
@@ -42,7 +42,7 @@ export async function DELETE(
     return NextResponse.json({ error: "place_id は必須です。" }, { status: 400 });
   }
 
-  const removed = removeTripPlace(params.tripId, tripPlaceId);
+  const removed = await removeTripPlace(params.tripId, tripPlaceId);
   if (!removed) {
     return NextResponse.json({ error: "対象の場所が見つかりません。" }, { status: 404 });
   }
