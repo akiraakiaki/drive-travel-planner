@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTrip, listTripPlaces } from "@/lib/store";
+import { getTrip, listTripPlaces, deleteTrip } from "@/lib/store";
 import { getPlaceDetails, getOpeningHoursForDate } from "@/lib/places";
 import { getJapaneseHolidaysInRange } from "@/lib/holidays";
 import { enumerateDates } from "@/lib/date-utils";
@@ -21,6 +21,7 @@ export async function GET(
   }
 
   const places = await listTripPlaces(trip.id);
+  console.log(`[api] GET /api/trips/${params.tripId} -> tripId(internal)=${trip.id} placeCount=${places.length}`);
   const tripDates = enumerateDates(trip.start_date, trip.end_date);
 
   // 6章: Google由来の情報は保存せず、都度取得する。
@@ -76,11 +77,34 @@ export async function GET(
   // 生成済みプランがあれば、表示用にGoogle由来の情報を都度合成する(保存はしない)
   const planView = trip.plan ? await buildPlanView(trip.plan, placeInfoCache) : null;
 
-  return NextResponse.json({
-    trip,
-    places: placesWithInfo,
-    holidays,
-    day_place_info: dayPlaceInfo,
-    plan_view: planView,
-  });
+  // `export const dynamic = "force-dynamic"` に加えて、レスポンスヘッダーでも明示的に
+  // キャッシュを禁止する。Vercelのエッジ/CDN層や中間プロキシが、ルート設定の判定とは
+  // 別にレスポンスをキャッシュしてしまい、DBへの保存が画面に反映されない不具合を防ぐため。
+  return NextResponse.json(
+    {
+      trip,
+      places: placesWithInfo,
+      holidays,
+      day_place_info: dayPlaceInfo,
+      plan_view: planView,
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+      },
+    }
+  );
+}
+
+// DELETE /api/trips/:tripId
+// 旅行を削除する(登録済みの行きたい場所・生成済みプランも合わせて削除される)。
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { tripId: string } }
+) {
+  const deleted = await deleteTrip(params.tripId);
+  if (!deleted) {
+    return NextResponse.json({ error: "旅行が見つかりません。" }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true });
 }

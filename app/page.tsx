@@ -140,6 +140,8 @@ export default function HomePage() {
   const [showFeatures, setShowFeatures] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function loadTrips() {
     const res = await fetch("/api/trips");
@@ -150,6 +152,29 @@ export default function HomePage() {
   useEffect(() => {
     loadTrips();
   }, []);
+
+  async function handleDeleteTrip(tripId: string, tripName: string) {
+    const confirmed = window.confirm(
+      `「${tripName}」を削除しますか？\n登録した行きたい場所や作成済みのプランも全て削除され、元に戻せません。`
+    );
+    if (!confirmed) return;
+
+    setDeleteError(null);
+    setDeletingId(tripId);
+    try {
+      const res = await fetch(`/api/trips/${tripId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setDeleteError(data?.error ?? "削除に失敗しました。");
+        return;
+      }
+      setTrips((prev) => (prev ? prev.filter((t) => t.id !== tripId) : prev));
+    } catch {
+      setDeleteError("削除に失敗しました。");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleCreate(formData: FormData) {
     setError(null);
@@ -287,12 +312,13 @@ export default function HomePage() {
             まだ旅行がありません。上のボタンから最初の旅行を作成してください。
           </p>
         )}
+        {deleteError && <p className="mb-3 text-sm text-alert">⚠ {deleteError}</p>}
         <ul className="space-y-3">
           {trips?.map((trip) => (
-            <li key={trip.id}>
+            <li key={trip.id} className="relative">
               <Link
                 href={`/trips/${trip.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border-l-4 border-amber bg-amber/10 px-4 py-4 shadow-sm transition hover:shadow-md"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border-l-4 border-amber bg-amber/10 px-4 py-4 pr-14 shadow-sm transition hover:shadow-md"
               >
                 <p className="font-display text-base font-medium text-ink">
                   {trip.name}
@@ -301,6 +327,18 @@ export default function HomePage() {
                   {trip.start_date} → {trip.end_date}
                 </p>
               </Link>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDeleteTrip(trip.id, trip.name);
+                }}
+                disabled={deletingId === trip.id}
+                aria-label={`${trip.name}を削除`}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-alert/30 bg-card px-2 py-1.5 text-xs text-alert hover:bg-alert/10 disabled:opacity-50"
+              >
+                {deletingId === trip.id ? "削除中..." : "🗑"}
+              </button>
             </li>
           ))}
         </ul>

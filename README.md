@@ -99,6 +99,10 @@ http://localhost:3000 で確認できます。
 
 `app/api/**/route.ts` には全て `export const dynamic = "force-dynamic";` を明示しています。これが無いと、DBを直接読み書きするだけ(内部で`fetch()`を使わない)のルートハンドラは、Next.jsの自動判定によりVercel上で**静的にキャッシュされてしまい**、DBへの保存自体は成功しているのにAPIのレスポンスが更新されない(＝画面に反映されない)という不具合が起きます。ローカルの`next dev`では全ルートが動的実行されるため気づきにくく、Vercel本番でのみ発生する点に注意してください。新しくAPIルートを追加する際も、この設定を必ず入れてください。
 
+さらに、`export const dynamic = "force-dynamic"` だけではVercelのエッジ/CDN層でのキャッシュを防ぎきれない場合があったため、`GET /api/trips` と `GET /api/trips/:tripId` のレスポンスには明示的に `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` ヘッダーを付与しています。同様の「DBには保存されているのに一覧に出てこない」症状が再発した場合は、他のGETルートにも同じヘッダーを追加してください。
+
+`lib/db.ts` の `readTripPlaces`/`writeTripPlaces` には診断用の `console.log` を仕込んでいます。同様の不具合が起きた場合は、Vercelダッシュボードの「Functions」→対象関数の「Logs」で `[db] readTripPlaces` / `[db] writeTripPlaces` の行を確認すると、実際にDBから何件取得できているかがすぐ分かります。
+
 ### Google Maps Platformの利用規約への対応
 
 Googleの各APIポリシーでは、**Place IDのみ無期限保存が許可**されており、それ以外の内容（名称・住所・座標・写真・評価・駐車場情報等）は原則キャッシュ・保存禁止です（Routes APIの座標に限り最大30日間の一時キャッシュのみ例外）。

@@ -71,7 +71,11 @@ export async function readTripPlaces(tripId: string): Promise<TripPlace[]> {
   const { rows } = await sql<{ data: TripPlace[] }>`
     SELECT data FROM trip_places WHERE trip_id = ${tripId}
   `;
-  return rows[0]?.data ?? [];
+  const places = rows[0]?.data ?? [];
+  // 「DBには保存されているのにUIに表示されない」といった不具合の切り分け用に、
+  // 件数を記録しておく(Vercelのダッシュボード上のFunction Logsで確認できる)。
+  console.log(`[db] readTripPlaces tripId=${tripId} rowFound=${rows.length > 0} placeCount=${places.length}`);
+  return places;
 }
 
 export async function writeTripPlaces(tripId: string, places: TripPlace[]): Promise<void> {
@@ -81,4 +85,14 @@ export async function writeTripPlaces(tripId: string, places: TripPlace[]): Prom
     VALUES (${tripId}, ${JSON.stringify(places)}::jsonb, now())
     ON CONFLICT (trip_id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
   `;
+  console.log(`[db] writeTripPlaces tripId=${tripId} placeCount=${places.length}`);
+}
+
+// 旅行を削除する(trip_places側も合わせて削除する)。
+// 戻り値は「実際に削除された行があったか」(存在しないIDを指定した場合はfalse)。
+export async function deleteTrip(tripId: string): Promise<boolean> {
+  await ensureSchema();
+  await sql`DELETE FROM trip_places WHERE trip_id = ${tripId}`;
+  const result = await sql`DELETE FROM trips WHERE id = ${tripId}`;
+  return (result.rowCount ?? 0) > 0;
 }

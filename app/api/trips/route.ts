@@ -7,7 +7,13 @@ import { createTrip, listTrips } from "@/lib/store";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({ trips: await listTrips() });
+  // ルート設定(force-dynamic)に加えて、レスポンスヘッダーでも明示的にキャッシュを禁止する。
+  // Vercelのエッジ/CDN層が、ルート設定の判定とは別にレスポンスをキャッシュしてしまい、
+  // 新しく作成した旅行が一覧に反映されない不具合を防ぐため。
+  return NextResponse.json(
+    { trips: await listTrips() },
+    { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } }
+  );
 }
 
 // 4.1 旅行作成: 必須項目チェック(開始日 <= 終了日 等)

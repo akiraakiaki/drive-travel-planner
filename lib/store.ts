@@ -2,7 +2,7 @@
 // DBアクセスが非同期になったため、全ての関数を async にしている
 // (以前のファイルI/O版から移行した際、呼び出し側には全てawaitを追加している)。
 import { DayPlan, PaceMode, RoutePreference, Trip, TripDayConfig, TripPlace, TripPlan } from "./types";
-import { readAllTrips, readTrip, readTripPlaces, writeTrip, writeTripPlaces } from "./db";
+import { readAllTrips, readTrip, readTripPlaces, writeTrip, writeTripPlaces, deleteTrip as dbDeleteTrip } from "./db";
 import { enumerateDates } from "./date-utils";
 
 function nowIso() {
@@ -304,4 +304,10 @@ export async function selectStopParking(
   };
   await writeTrip(updated);
   return updated;
+}
+
+// 旅行を削除する(登録済みの行きたい場所・プランも合わせて削除される)。
+// 戻り値は「実際に削除できたか」(存在しないIDの場合はfalse)。
+export async function deleteTrip(tripId: string): Promise<boolean> {
+  return dbDeleteTrip(tripId);
 }
