@@ -3,6 +3,11 @@ import { getTrip } from "@/lib/store";
 import { buildPlanView } from "@/lib/plan-view";
 import { buildHtmlExport } from "@/lib/export";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 // GET /api/trips/:tripId/export/print
 // ダウンロードさせず、ブラウザ上にそのまま表示する。
 // ブラウザの「印刷」→「PDFとして保存」を使えば、追加のライブラリなしでPDF化できる。

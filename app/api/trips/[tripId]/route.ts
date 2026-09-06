@@ -6,6 +6,11 @@ import { enumerateDates } from "@/lib/date-utils";
 import { buildPlanView } from "@/lib/plan-view";
 import { PlaceInfo, TripPlaceWithInfo } from "@/lib/types";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { tripId: string } }

@@ -4,6 +4,11 @@ import { getPlaceDetails } from "@/lib/places";
 import { generatePlan, PlannerNamedLocation, PlannerPlaceInput } from "@/lib/planner";
 import { buildPlanView } from "@/lib/plan-view";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 // Place IDから、プラン生成に必要な名称+座標を取得する。
 // 取得できなければnull(=その地点は無しとしてプラン生成を続行する)。
 const resolveCache = new Map<string, Promise<PlannerNamedLocation | null>>();

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTrip, selectStopParking } from "@/lib/store";
 import { recomputeDayWithParking } from "@/lib/planner";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 const WALK_SPEED_METERS_PER_MINUTE = 70; // おおよその徒歩速度(信号待ち等を含めた目安)
 
 // POST /api/trips/:tripId/plan/select-parking

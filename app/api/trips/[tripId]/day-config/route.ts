@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateTripDayConfig } from "@/lib/store";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 // PATCH /api/trips/:tripId/day-config
 // { day: number, activity_start_time?: "HH:mm", activity_end_time?: "HH:mm",
 //   origin_place_id?: string | null, destination_place_id?: string | null }

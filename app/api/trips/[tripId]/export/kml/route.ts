@@ -3,6 +3,11 @@ import { getTrip } from "@/lib/store";
 import { buildPlanView } from "@/lib/plan-view";
 import { LatLngValue } from "@/lib/types";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 // XML特殊文字をエスケープする
 function esc(s: string): string {
   return s

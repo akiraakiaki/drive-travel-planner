@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTrip } from "@/lib/store";
 import { getPlaceDetails, searchNearbyParking } from "@/lib/places";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 // GET /api/trips/:tripId/plan/stops/:tripPlaceId/parking
 // 指定した訪問地の周辺駐車場を、その場でGoogle Places APIから検索して返す。
 // Googleポリシー上、駐車場の名称・住所等はplace_id以外恒久保存できないため、

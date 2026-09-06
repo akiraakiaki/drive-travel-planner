@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateTripSettings } from "@/lib/store";
 import { PaceMode, RoutePreference } from "@/lib/types";
 
+// Vercel上でこのルートが静的にキャッシュされ、DBへの書き込みが画面に反映されない
+// (SyntaxError: Unexpected end of JSON input等の症状につながる)問題を防ぐため、
+// 常に動的(リクエストのたびに実行)にする。
+export const dynamic = "force-dynamic";
+
 const VALID_PACE: PaceMode[] = ["relaxed", "packed"];
 const VALID_ROUTE_PREFERENCE: RoutePreference[] = ["fastest", "cheapest"];
 
