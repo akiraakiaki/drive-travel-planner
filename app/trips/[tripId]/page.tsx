@@ -87,7 +87,7 @@ function PlacePickerField({
     if (!query.trim()) return;
     setSearching(true);
     try {
-      const res = await fetch(`/api/places/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/places/search?q=${encodeURIComponent(query)}`, { cache: "no-store" });
       const data = await res.json();
       if (res.ok) setResults(data.results);
     } finally {
@@ -238,7 +238,7 @@ export default function TripDetailPage({
     setSearching(true);
     setSearchError(null);
     try {
-      const res = await fetch(`/api/places/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/places/search?q=${encodeURIComponent(query)}`, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) {
         setSearchError(data.error ?? "検索に失敗しました。");
@@ -432,7 +432,9 @@ export default function TripDetailPage({
       setParkingLoadingId(tripPlaceId);
       setParkingActionError(null);
       try {
-        const res = await fetch(`/api/trips/${tripId}/plan/stops/${tripPlaceId}/parking`);
+        const res = await fetch(`/api/trips/${tripId}/plan/stops/${tripPlaceId}/parking`, {
+          cache: "no-store",
+        });
         const data = await res.json();
         if (!res.ok) {
           setParkingActionError(data.error ?? "駐車場の検索に失敗しました。");

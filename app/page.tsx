@@ -144,7 +144,7 @@ export default function HomePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function loadTrips() {
-    const res = await fetch("/api/trips");
+    const res = await fetch("/api/trips", { cache: "no-store" });
     const data = await res.json();
     setTrips(data.trips);
   }
