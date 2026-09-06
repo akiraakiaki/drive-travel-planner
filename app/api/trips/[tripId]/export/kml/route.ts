@@ -90,6 +90,7 @@ export async function GET(
   return new NextResponse(kml, {
     status: 200,
     headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       "Content-Type": "application/vnd.google-earth.kml+xml; charset=utf-8",
       "Content-Disposition": `attachment; filename="${encodeURIComponent(trip.name)}.kml"`,
     },

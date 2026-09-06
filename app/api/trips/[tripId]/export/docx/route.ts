@@ -26,6 +26,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,
     headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "Content-Disposition": `attachment; filename="${encodeURIComponent(trip.name)}.docx"`,
     },

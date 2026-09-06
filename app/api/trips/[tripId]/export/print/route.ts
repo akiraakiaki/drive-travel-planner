@@ -26,6 +26,7 @@ export async function GET(
   return new NextResponse(html, {
     status: 200,
     headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
       "Content-Type": "text/html; charset=utf-8",
       // attachmentではなくinlineにすることで、ダウンロードさせずブラウザでそのまま開く
       "Content-Disposition": "inline",

@@ -13,18 +13,18 @@ export async function GET(req: NextRequest) {
   if (!q) {
     return NextResponse.json(
       { error: "検索クエリ(q)を指定してください。" },
-      { status: 400 }
+      { status: 400, headers: { "Cache-Control": "no-store" } }
     );
   }
 
   try {
     const results = await searchPlaces(q);
-    return NextResponse.json({ results });
+    return NextResponse.json({ results }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
       { error: "場所の検索に失敗しました。時間をおいて再度お試しください。" },
-      { status: 502 }
+      { status: 502, headers: { "Cache-Control": "no-store" } }
     );
   }
 }

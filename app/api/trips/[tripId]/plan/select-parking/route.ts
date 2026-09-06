@@ -7,6 +7,8 @@ import { recomputeDayWithParking } from "@/lib/planner";
 // 常に動的(リクエストのたびに実行)にする。
 export const dynamic = "force-dynamic";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" };
+
 const WALK_SPEED_METERS_PER_MINUTE = 70; // おおよその徒歩速度(信号待ち等を含めた目安)
 
 // POST /api/trips/:tripId/plan/select-parking
@@ -22,18 +24,30 @@ export async function POST(
 ) {
   const body = await req.json().catch(() => null);
   if (!body || typeof body.day !== "number" || typeof body.trip_place_id !== "string") {
-    return NextResponse.json({ error: "day と trip_place_id は必須です。" }, { status: 400 });
+    return NextResponse.json(
+      { error: "day と trip_place_id は必須です。" },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
   }
 
   const trip = await getTrip(params.tripId);
+  console.log(
+    `[api] POST .../select-parking tripId=${params.tripId} tripFound=${!!trip} planFound=${!!trip?.plan} day=${body.day} tripPlaceId=${body.trip_place_id}`
+  );
   if (!trip || !trip.plan) {
-    return NextResponse.json({ error: "旅行またはプランが見つかりません。" }, { status: 404 });
+    return NextResponse.json(
+      { error: "旅行またはプランが見つかりません。" },
+      { status: 404, headers: NO_STORE_HEADERS }
+    );
   }
 
   const day = trip.plan.days.find((d) => d.day === body.day);
   const stop = day?.stops.find((s) => s.trip_place_id === body.trip_place_id);
   if (!day || !stop) {
-    return NextResponse.json({ error: "対象の訪問地が見つかりません。" }, { status: 404 });
+    return NextResponse.json(
+      { error: "対象の訪問地が見つかりません。" },
+      { status: 404, headers: NO_STORE_HEADERS }
+    );
   }
 
   if (body.parking_place_id === null) {
@@ -45,11 +59,14 @@ export async function POST(
       null,
       recomputeDayWithParking
     );
-    return NextResponse.json({ trip: updated });
+    return NextResponse.json({ trip: updated }, { headers: NO_STORE_HEADERS });
   }
 
   if (typeof body.parking_place_id !== "string") {
-    return NextResponse.json({ error: "parking_place_id が不正です。" }, { status: 400 });
+    return NextResponse.json(
+      { error: "parking_place_id が不正です。" },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
   }
 
   const distanceMeters: number | null =
@@ -69,8 +86,11 @@ export async function POST(
   );
 
   if (!updated) {
-    return NextResponse.json({ error: "駐車場の選択に失敗しました。" }, { status: 500 });
+    return NextResponse.json(
+      { error: "駐車場の選択に失敗しました。" },
+      { status: 500, headers: NO_STORE_HEADERS }
+    );
   }
 
-  return NextResponse.json({ trip: updated });
+  return NextResponse.json({ trip: updated }, { headers: NO_STORE_HEADERS });
 }
