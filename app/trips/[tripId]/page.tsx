@@ -194,6 +194,9 @@ export default function TripDetailPage({
   const [addError, setAddError] = useState<string | null>(null);
 
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [editingDates, setEditingDates] = useState(false);
+  const [datesError, setDatesError] = useState<string | null>(null);
+  const [datesSaving, setDatesSaving] = useState(false);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const [planLoading, setPlanLoading] = useState(false);
@@ -392,6 +395,34 @@ export default function TripDetailPage({
     setTimeout(() => setShareMessage(null), 2500);
   }
 
+  // --- 日程(開始日・終了日)の変更 ---
+  async function handleUpdateDates(formData: FormData) {
+    const startDate = formData.get("start_date") as string;
+    const endDate = formData.get("end_date") as string;
+    if (!startDate || !endDate) return;
+
+    setDatesError(null);
+    setDatesSaving(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/dates`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ start_date: startDate, end_date: endDate }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDatesError(data.error ?? "日程の変更に失敗しました。");
+        return;
+      }
+      setEditingDates(false);
+      await loadTrip();
+    } catch {
+      setDatesError("日程の変更に失敗しました。");
+    } finally {
+      setDatesSaving(false);
+    }
+  }
+
   // --- 駐車場の一覧を都度取得(保存はしない。ボタンを押した時だけ検索する) ---
   async function handleToggleParking(tripPlaceId: string) {
     const willExpand = expandedParking !== tripPlaceId;
@@ -464,9 +495,72 @@ export default function TripDetailPage({
       <header className="mb-6 mt-3">
         <h1 className="font-display text-xl font-bold text-ink sm:text-2xl">{trip.name}</h1>
         <p className="mt-1 text-sm text-mute">{trip.destination}</p>
-        <p className="mt-2 inline-block rounded-md bg-route/10 px-2 py-1 font-mono text-sm text-route">
-          {trip.start_date} → {trip.end_date}
-        </p>
+
+        {!editingDates ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <p className="inline-block rounded-md bg-route/10 px-2 py-1 font-mono text-sm text-route">
+              {trip.start_date} → {trip.end_date}
+            </p>
+            <button
+              onClick={() => {
+                setDatesError(null);
+                setEditingDates(true);
+              }}
+              className="rounded-md border border-route/30 px-2 py-1 text-xs text-route hover:border-route hover:bg-route/5"
+            >
+              ✏ 日程を変更
+            </button>
+          </div>
+        ) : (
+          <form
+            action={handleUpdateDates}
+            className="mt-2 space-y-2 rounded-lg border border-route/20 bg-card p-3 shadow-sm"
+          >
+            <p className="text-xs text-mute">
+              日程を変更すると、生成済みのプランはリセットされます（もう一度「プランを作成」が必要です）。日ごとの活動時間・出発地/到着地は、同じ日付が残っていればそのまま引き継がれます。
+            </p>
+            <div className="flex flex-wrap items-end gap-2">
+              <div>
+                <label className="mb-1 block text-[11px] text-mute">開始日</label>
+                <input
+                  type="date"
+                  name="start_date"
+                  defaultValue={trip.start_date}
+                  required
+                  className="rounded-md border border-route/30 bg-paper px-2 py-1.5 font-mono text-sm text-ink focus:border-route focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] text-mute">終了日</label>
+                <input
+                  type="date"
+                  name="end_date"
+                  defaultValue={trip.end_date}
+                  required
+                  className="rounded-md border border-route/30 bg-paper px-2 py-1.5 font-mono text-sm text-ink focus:border-route focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={datesSaving}
+                className="rounded-md bg-route px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
+              >
+                {datesSaving ? "更新中..." : "更新する"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingDates(false);
+                  setDatesError(null);
+                }}
+                className="rounded-md border border-route/30 px-3 py-1.5 text-sm text-mute hover:border-route"
+              >
+                キャンセル
+              </button>
+            </div>
+            {datesError && <p className="text-sm text-alert">⚠ {datesError}</p>}
+          </form>
+        )}
       </header>
 
       {holidays.length > 0 && (

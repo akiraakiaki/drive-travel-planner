@@ -315,30 +315,25 @@ export default function HomePage() {
         {deleteError && <p className="mb-3 text-sm text-alert">⚠ {deleteError}</p>}
         <ul className="space-y-3">
           {trips?.map((trip) => (
-            <li key={trip.id} className="relative">
-              <Link
-                href={`/trips/${trip.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border-l-4 border-amber bg-amber/10 px-4 py-4 pr-14 shadow-sm transition hover:shadow-md"
-              >
-                <p className="font-display text-base font-medium text-ink">
-                  {trip.name}
-                </p>
-                <p className="inline-block rounded-md bg-amber/30 px-2 py-1 font-mono text-sm font-medium text-[#8a5a12]">
+            <li
+              key={trip.id}
+              className="overflow-hidden rounded-lg border-l-4 border-amber bg-amber/10 shadow-sm"
+            >
+              <Link href={`/trips/${trip.id}`} className="block px-4 pt-4 transition hover:bg-amber/5">
+                <p className="font-display text-base font-medium text-ink">{trip.name}</p>
+                <p className="mt-1 inline-block rounded-md bg-amber/30 px-2 py-1 font-mono text-sm font-medium text-[#8a5a12]">
                   {trip.start_date} → {trip.end_date}
                 </p>
               </Link>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDeleteTrip(trip.id, trip.name);
-                }}
-                disabled={deletingId === trip.id}
-                aria-label={`${trip.name}を削除`}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-alert/30 bg-card px-2 py-1.5 text-xs text-alert hover:bg-alert/10 disabled:opacity-50"
-              >
-                {deletingId === trip.id ? "削除中..." : "🗑"}
-              </button>
+              <div className="flex justify-end border-t border-amber/20 px-4 py-2">
+                <button
+                  onClick={() => handleDeleteTrip(trip.id, trip.name)}
+                  disabled={deletingId === trip.id}
+                  className="flex items-center gap-1.5 rounded-md border border-alert/40 bg-card px-3 py-1.5 text-xs font-medium text-alert hover:bg-alert/10 disabled:opacity-50"
+                >
+                  🗑 {deletingId === trip.id ? "削除中..." : "この旅行を削除"}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

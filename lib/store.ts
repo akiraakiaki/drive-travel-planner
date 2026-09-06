@@ -29,6 +29,30 @@ function buildDayConfigs(
   }));
 }
 
+// 日程変更時、既存のday_configs(日付ごとの活動時間・出発地/到着地)を、
+// 同じ日付が新しい期間にも含まれていればそのまま引き継ぐ。
+// 新しく増えた日は共通デフォルト値、無くなった日は単純に切り捨てる。
+function rebuildDayConfigsPreserving(
+  existing: TripDayConfig[],
+  startDate: string,
+  endDate: string,
+  dailyStart: string,
+  dailyEnd: string
+): TripDayConfig[] {
+  const byDate = new Map(existing.map((dc) => [dc.date, dc]));
+  return enumerateDates(startDate, endDate).map((date, i) => {
+    const prev = byDate.get(date);
+    return {
+      day: i + 1,
+      date,
+      activity_start_time: prev?.activity_start_time ?? dailyStart,
+      activity_end_time: prev?.activity_end_time ?? dailyEnd,
+      origin_place_id: prev?.origin_place_id ?? null,
+      destination_place_id: prev?.destination_place_id ?? null,
+    };
+  });
+}
+
 // 旅程設定機能を追加する前に作成された旧データ(day_configs等が存在しない)、
 // 公共交通機関モードが存在した頃の旧データ、単一の「拠点」/トリップ単位の出発地・到着地だった頃の
 // 旧データを、読み込み時に自動補完する。保存されている生データを直接書き換えずに済むための互換レイヤー。
@@ -310,4 +334,43 @@ export async function selectStopParking(
 // 戻り値は「実際に削除できたか」(存在しないIDの場合はfalse)。
 export async function deleteTrip(tripId: string): Promise<boolean> {
   return dbDeleteTrip(tripId);
+}
+
+// 旅行の開始日・終了日を変更する。
+// 日程が変わるとその日の活動時間・出発地/到着地の構成(day_configs)も組み替わるため、
+// 同じ日付が新しい期間にも残っていれば設定を引き継ぎ、そうでなければ初期値にする。
+// 生成済みのプラン(plan)は日付・日数と密接に結びついているため、日程変更時は破棄する
+// (作り直しが必要なことをフロント側で案内する)。
+export async function updateTripDates(
+  tripId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ ok: true; trip: Trip } | { ok: false; error: string }> {
+  if (startDate > endDate) {
+    return { ok: false, error: "開始日は終了日以前である必要があります。" };
+  }
+
+  const raw = await readTrip(tripId);
+  if (!raw) return { ok: false, error: "旅行が見つかりません。" };
+
+  const trip = normalizeTrip(raw);
+  const day_configs = rebuildDayConfigsPreserving(
+    trip.day_configs,
+    startDate,
+    endDate,
+    trip.daily_start_time,
+    trip.daily_end_time
+  );
+
+  const updated: Trip = {
+    ...trip,
+    start_date: startDate,
+    end_date: endDate,
+    day_configs,
+    plan: null,
+    updated_at: nowIso(),
+  };
+
+  await writeTrip(updated);
+  return { ok: true, trip: updated };
 }
