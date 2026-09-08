@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Drive Travel Planner</string>
+    <string name="title_activity_main">Drive Travel Planner</string>
+    <string name="package_name">com.drivetravelplanner.app</string>
+    <string name="custom_url_scheme">com.drivetravelplanner.app</string>
+</resources>

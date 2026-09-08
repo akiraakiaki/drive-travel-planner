@@ -26,9 +26,14 @@ function ensureSchema(): Promise<void> {
         CREATE TABLE IF NOT EXISTS trips (
           id TEXT PRIMARY KEY,
           data JSONB NOT NULL,
+          device_id TEXT,
           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `;
+      // 既にtripsテーブルが存在する(Postgres移行時点の)環境向けに、
+      // device_id列が無ければ追加する(冪等: 既にあれば何もしない)。
+      await sql`ALTER TABLE trips ADD COLUMN IF NOT EXISTS device_id TEXT`;
+      await sql`CREATE INDEX IF NOT EXISTS trips_device_id_idx ON trips (device_id)`;
       await sql`
         CREATE TABLE IF NOT EXISTS trip_places (
           trip_id TEXT PRIMARY KEY,
@@ -45,6 +50,17 @@ function ensureSchema(): Promise<void> {
   return schemaReadyPromise;
 }
 
+// 指定した端末IDが作成した旅行だけを返す(トップページの一覧用)。
+// 認証機能が無い暫定対応のため、旅行詳細への直接アクセス(共有リンク等)は
+// 引き続きIDが分かれば端末を問わず可能(readTrip参照)。
+export async function readTripsByDevice(deviceId: string): Promise<Trip[]> {
+  await ensureSchema();
+  const { rows } = await sql<{ data: Trip }>`
+    SELECT data FROM trips WHERE device_id = ${deviceId}
+  `;
+  return rows.map((r) => r.data);
+}
+
 export async function readAllTrips(): Promise<Trip[]> {
   await ensureSchema();
   const { rows } = await sql<{ data: Trip }>`SELECT data FROM trips`;
@@ -57,13 +73,22 @@ export async function readTrip(tripId: string): Promise<Trip | null> {
   return rows[0]?.data ?? null;
 }
 
-export async function writeTrip(trip: Trip): Promise<void> {
+// deviceIdは新規作成時にのみ紐付ける(更新時はnullを渡して既存の値を変更しない)。
+export async function writeTrip(trip: Trip, deviceId?: string | null): Promise<void> {
   await ensureSchema();
-  await sql`
-    INSERT INTO trips (id, data, updated_at)
-    VALUES (${trip.id}, ${JSON.stringify(trip)}::jsonb, now())
-    ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
-  `;
+  if (deviceId) {
+    await sql`
+      INSERT INTO trips (id, data, device_id, updated_at)
+      VALUES (${trip.id}, ${JSON.stringify(trip)}::jsonb, ${deviceId}, now())
+      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+    `;
+  } else {
+    await sql`
+      INSERT INTO trips (id, data, updated_at)
+      VALUES (${trip.id}, ${JSON.stringify(trip)}::jsonb, now())
+      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+    `;
+  }
 }
 
 export async function readTripPlaces(tripId: string): Promise<TripPlace[]> {

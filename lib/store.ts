@@ -2,7 +2,15 @@
 // DBアクセスが非同期になったため、全ての関数を async にしている
 // (以前のファイルI/O版から移行した際、呼び出し側には全てawaitを追加している)。
 import { DayPlan, PaceMode, RoutePreference, Trip, TripDayConfig, TripPlace, TripPlan } from "./types";
-import { readAllTrips, readTrip, readTripPlaces, writeTrip, writeTripPlaces, deleteTrip as dbDeleteTrip } from "./db";
+import {
+  readAllTrips,
+  readTripsByDevice,
+  readTrip,
+  readTripPlaces,
+  writeTrip,
+  writeTripPlaces,
+  deleteTrip as dbDeleteTrip,
+} from "./db";
 import { enumerateDates } from "./date-utils";
 
 function nowIso() {
@@ -102,14 +110,17 @@ function normalizeTrip(trip: Trip): Trip {
   };
 }
 
-export async function createTrip(input: {
-  name: string;
-  destination: string;
-  start_date: string;
-  end_date: string;
-  daily_start_time?: string;
-  daily_end_time?: string;
-}): Promise<Trip> {
+export async function createTrip(
+  input: {
+    name: string;
+    destination: string;
+    start_date: string;
+    end_date: string;
+    daily_start_time?: string;
+    daily_end_time?: string;
+  },
+  deviceId?: string | null
+): Promise<Trip> {
   const daily_start_time = input.daily_start_time ?? "09:00";
   const daily_end_time = input.daily_end_time ?? "18:00";
 
@@ -130,12 +141,21 @@ export async function createTrip(input: {
     updated_at: nowIso(),
   };
 
-  await writeTrip(trip);
+  await writeTrip(trip, deviceId ?? null);
   await writeTripPlaces(trip.id, []);
 
   return trip;
 }
 
+// トップページの一覧用: 指定した端末が作成した旅行だけを返す。
+// deviceIdが渡されない場合(古いクライアント等)は、互換性のため空配列ではなく
+// 全件を返すのではなく安全側に倒して空配列を返す。
+export async function listTripsForDevice(deviceId: string): Promise<Trip[]> {
+  const trips = await readTripsByDevice(deviceId);
+  return trips.map(normalizeTrip).sort((a, b) => (a.start_date < b.start_date ? -1 : 1));
+}
+
+// 管理・移行用: 端末を問わず全件取得する(通常のAPIからは呼ばない)。
 export async function listTrips(): Promise<Trip[]> {
   const trips = await readAllTrips();
   return trips.map(normalizeTrip).sort((a, b) => (a.start_date < b.start_date ? -1 : 1));

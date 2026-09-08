@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Trip } from "@/lib/types";
 import { shareOrCopy } from "@/lib/share";
+import { apiFetch, apiFetchJsonGet } from "@/lib/api-base";
+import { tripHref } from "@/lib/trip-link";
 
 const FEATURES: string[] = [
   "🔍 名所を検索して登録（営業時間を自動表示）",
@@ -142,11 +144,18 @@ export default function HomePage() {
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   async function loadTrips() {
-    const res = await fetch("/api/trips", { cache: "no-store" });
-    const data = await res.json();
-    setTrips(data.trips);
+    try {
+      const { data } = await apiFetchJsonGet("/api/trips");
+      setTrips((data as { trips: Trip[] }).trips);
+      setLoadError(null);
+    } catch (err) {
+      // モバイルでNEXT_PUBLIC_API_BASE_URLの設定漏れ等によりAPIに到達できない場合、
+      // ここでJSON以外(HTMLのエラーページ等)が返ってきたことが分かるメッセージになる。
+      setLoadError(err instanceof Error ? err.message : "旅行一覧の取得に失敗しました。");
+    }
   }
 
   useEffect(() => {
@@ -162,7 +171,7 @@ export default function HomePage() {
     setDeleteError(null);
     setDeletingId(tripId);
     try {
-      const res = await fetch(`/api/trips/${tripId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/trips/${tripId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         setDeleteError(data?.error ?? "削除に失敗しました。");
@@ -184,7 +193,7 @@ export default function HomePage() {
       start_date: formData.get("start_date"),
       end_date: formData.get("end_date"),
     };
-    const res = await fetch("/api/trips", {
+    const res = await apiFetch("/api/trips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -306,7 +315,12 @@ export default function HomePage() {
       </section>
 
       <section>
-        {trips === null && <p className="text-sm text-mute">読み込み中...</p>}
+        {loadError && (
+          <p className="mb-3 rounded-lg border border-alert/40 bg-alert/5 p-3 text-sm text-alert">
+            ⚠ {loadError}
+          </p>
+        )}
+        {trips === null && !loadError && <p className="text-sm text-mute">読み込み中...</p>}
         {trips?.length === 0 && (
           <p className="rounded-lg border border-dashed border-amber/40 p-6 text-sm text-mute">
             まだ旅行がありません。上のボタンから最初の旅行を作成してください。
@@ -319,7 +333,7 @@ export default function HomePage() {
               key={trip.id}
               className="overflow-hidden rounded-lg border-l-4 border-amber bg-amber/10 shadow-sm"
             >
-              <Link href={`/trips/${trip.id}`} className="block px-4 pt-4 transition hover:bg-amber/5">
+              <Link href={tripHref(trip.id)} className="block px-4 pt-4 transition hover:bg-amber/5">
                 <p className="font-display text-base font-medium text-ink">{trip.name}</p>
                 <p className="mt-1 inline-block rounded-md bg-amber/30 px-2 py-1 font-mono text-sm font-medium text-[#8a5a12]">
                   {trip.start_date} → {trip.end_date}

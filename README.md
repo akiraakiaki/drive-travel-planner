@@ -9,6 +9,7 @@
 
 ## 実装済み
 
+- **Web版（Vercel）とAndroid/iOSアプリ（Capacitor）を同一コードベースで提供**（詳細は下記「モバイルアプリ(Capacitor)構成」参照）
 - 旅行の作成・一覧、データの永続化（Postgres）（4章）
 - **旅行一覧からの削除**（登録済みの行きたい場所・生成済みプランも合わせて削除）
 - **旅行の日程（開始日・終了日）を後から変更可能**（同じ日付が残っていれば、日ごとの活動時間・出発地/到着地の設定を引き継ぐ。生成済みのプランは日付・日数に依存するためリセットされる）
@@ -114,3 +115,72 @@ http://localhost:3000 で確認できます。
 Googleの各APIポリシーでは、**Place IDのみ無期限保存が許可**されており、それ以外の内容（名称・住所・座標・写真・評価・駐車場情報等）は原則キャッシュ・保存禁止です（Routes APIの座標に限り最大30日間の一時キャッシュのみ例外）。
 
 このアプリでは、生成した旅程プランについても **Place IDと自社で計算した時刻・料金などの数値のみをDBに保存し、名称・座標・駐車場候補などのGoogle由来の表示情報は一切保存していません**。画面表示・エクスポート（Word/Excel/PDF/カレンダー/KML）のたびに、`lib/plan-view.ts` の `buildPlanView()` がPlace IDから最新の情報をGoogleに都度問い合わせて表示用データを組み立てます。駐車場候補も、一覧を開くたびにその場で検索するだけで保存しません。
+
+## モバイルアプリ(Capacitor)構成
+
+Web版（Vercel）とAndroid/iOSアプリで**同じNext.jsコードベースを共有**しつつ、Capacitorアプリ側は「サーバーを持たない静的シェル」として動かす構成にしている。
+
+```
+┌─────────────────────────────┐
+│ Vercel(バックエンド兼Web版)    │
+│ app/api/** … Neon Postgres /  │
+│   Google Maps APIを呼ぶ処理   │
+│ app/page.tsx 等 … Web版として │
+│   そのまま配信                │
+└─────────────────────────────┘
+        ▲ HTTPS (絶対URL)
+┌─────────────────────────────┐
+│ Capacitorアプリ(iOS/Android)  │
+│ out/ に静的書き出ししたHTML/JS │
+│   を端末内に同梱して即座に表示 │
+│ データはVercelのAPIを           │
+│   絶対URL+X-Device-Idで呼ぶ    │
+└─────────────────────────────┘
+```
+
+### なぜこの構成か(App Store 4.2対策)
+
+`capacitor.config.ts` の `server.url` にVercelの本番URLを設定して「リモートページを丸ごと表示するだけ」にする構成は、App Store審査ガイドライン4.2(Minimum Functionality)で「Webサイトの単なるラッパー」と判定されやすい。そのため、HTML/JS自体は端末にビルド同梱し、データ取得だけをAPI経由で行う構成にしている。
+
+### 主要な設計判断
+
+- **`app/api/**` はモバイルに同梱しない**：Route HandlerはNext.jsの`output:'export'`(静的書き出し)と共存できないため、モバイル向けビルド時だけ `scripts/build-mobile.mjs` が一時的に `app/api` を退避してからビルドする(Vercel向けビルド `npm run build` には一切影響しない)。
+- **旅程詳細ページを2つのラッパー+共通コンポーネントに分離**：`components/TripDetailScreen.tsx` に画面ロジックを集約し、Web版は `app/trips/[tripId]/page.tsx`(パスパラメータ)、モバイル版は `app/trip/page.tsx`(`?id=`のクエリ文字列)から呼び出す。tripIdはNeon Postgres上の実行時データでビルド時に列挙できないため、`app/trips/[tripId]` に`generateStaticParams()`を書いて無理に静的生成しようとするのではなく、**モバイル向けビルド時に `app/trips` ディレクトリ自体を `scripts/build-mobile.mjs` が一時退避してビルド対象から除外**する方式にしている。モバイル版では `app/trip/page.tsx` が実行時にクエリ文字列からtripIdを受け取り、Vercelの `/api/trips/:tripId` から都度データを取得する。
+- **fetch呼び出しは全て `lib/api-base.ts` の `apiFetch`/`apiUrl` 経由**：Web版では相対パスのまま、モバイル版はビルド時の`NEXT_PUBLIC_API_BASE_URL`で絶対URLに切り替わる。あわせて `X-Device-Id` ヘッダーも自動付与する。
+- **`middleware.ts` でCORSを許可**：モバイルアプリはVercelから見て別オリジンになるため、`/api/:path*` に対してCapacitorのオリジン(`capacitor://localhost`, `https://localhost` 等)を許可している。Capacitor/Ionicの既知オリジンパターンは環境変数の設定内容に関わらず常に許可し(`ALLOWED_MOBILE_ORIGINS`は追加許可のみに使う)、プリフライト(OPTIONS)には常に2xxで応答する。認証はCookieではなく`X-Device-Id`ヘッダーで行っているため、`Access-Control-Allow-Credentials`は意図的に設定していない。
+
+### 端末ベースの簡易データ分離について(重要・暫定対応)
+
+本格的なユーザー認証(ログイン)はまだ導入していない。認証なしのままモバイルアプリを公開すると、トップページの旅行一覧が**全利用者で共有される**状態になってしまうため、`lib/device-id.ts` で生成した端末IDを `trips.device_id` に紐付け、**一覧表示だけ**を「自分の端末が作った旅行」に絞り込んでいる。
+
+旅程詳細ページやAPI操作自体は、これまで通りIDが分かれば端末を問わずアクセス可能なままにしている(「旅程を共有」機能でリンクを渡した相手が閲覧・編集できるようにするため、意図的に制限していない)。**本格的な複数ユーザー運用やプライバシー要件が明確になった場合は、Supabase Auth等による正式な認証への置き換えを推奨する。**
+
+### モバイルビルドの実行手順(お手元で実行)
+
+```bash
+npm install
+npm run build:mobile      # app/apiを一時退避 → output:'export'で静的書き出し(out/)→復元
+npx cap sync               # out/ の内容をios/android各プロジェクトへコピー
+```
+
+`.env.local` (またはCI/CDのビルド環境変数)には、モバイルビルド時に以下を設定すること。
+
+```
+NEXT_PUBLIC_API_BASE_URL=https://<本番のVercelドメイン>
+NEXT_PUBLIC_BUILD_TARGET=mobile
+```
+
+`npm run build:mobile` は内部で `BUILD_TARGET=mobile` と `NEXT_PUBLIC_BUILD_TARGET=mobile` を自動設定するが、`NEXT_PUBLIC_API_BASE_URL` は環境ごとに異なるため、事前に `.env.local` 等へ設定しておく必要がある。
+
+**`NEXT_PUBLIC_API_BASE_URL` が未設定、または `https://` から始まらない・`localhost`を含む等の不正な値の場合、`scripts/build-mobile.mjs` はビルド自体を失敗させる。** これは、未検知のままビルドが成功してしまうと、アプリ内蔵ページの`fetch("/api/...")`がVercelではなくアプリ自身のWebView(`https://localhost`)へのリクエストになり、実機/エミュレーターで「JSONを期待した箇所にHTMLが返ってきてパースエラーになる」という原因の分かりにくい不具合につながるため(実際に発生した事例: Logcatに `SyntaxError: Unexpected token '<'` が出る等)。念のため `lib/api-base.ts` 側にも、モバイルビルドかつ環境変数未設定の場合に既知の本番URLへフォールバックする二重の安全策を入れている。
+
+万一この対策をすり抜けてAPIベースURLの設定を誤った場合でも、`lib/api-base.ts` の `apiFetchJsonGet`/`apiFetchJson` がレスポンスの`Content-Type`を確認し、JSON以外(HTMLのエラーページ等)が返ってきた場合はその旨と応答内容の一部を含むメッセージで例外を投げるため、画面上に原因を推測しやすいエラーメッセージが表示される。
+
+### iOS追加・ストア申請に向けて(未着手・要対応)
+
+- `npm install @capacitor/ios && npx cap add ios`
+- Apple Developer Program登録、Xcodeでの署名・プロビジョニング設定
+- `PrivacyInfo.xcprivacy`(プライバシーマニフェスト)の追加
+- App Store Connect / Google Play Consoleでのプライバシーポリシーページ登録(Vercel上に静的ページとして用意する)
+- Google Playの署名鍵(keystore)作成、データセーフティ申告
+- App Store 4.2対策として、`@capacitor/share`(導入済み)に加えて、オフライン時の直近プラン閲覧等、ネイティブアプリらしい機能を最低1つ実装してから申請することを推奨
